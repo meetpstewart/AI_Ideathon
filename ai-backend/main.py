@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
 
 from google.cloud import discoveryengine_v1
 from vertexai.generative_models import GenerativeModel
@@ -41,8 +42,18 @@ vertexai.init(project=PROJECT_ID, location="us-central1")
 model = GenerativeModel("publishers/google/models/gemini-2.5-flash")
 
 
+# =========================
+# Request / Response Models
+# =========================
+
+class ConversationMessage(BaseModel):
+    role: str   # "user" or "assistant"
+    content: str
+
+
 class QueryRequest(BaseModel):
     query: str
+    conversation_history: List[ConversationMessage] = []
 
 
 # =========================
@@ -50,21 +61,15 @@ class QueryRequest(BaseModel):
 # =========================
 
 def normalize_citations(answer_text: str):
-    """
-    Converts grouped citations like:
-    [1, 3, 5] → [1] [3] [5]
-    """
+    """Converts grouped citations like [1, 3, 5] → [1] [3] [5]"""
     def replace_group(match):
         numbers = re.findall(r"\d+", match.group(1))
         return " ".join(f"[{n}]" for n in numbers)
-
     return re.sub(r"\[(.*?)\]", replace_group, answer_text)
 
 
 def extract_citations(answer_text: str):
-    """
-    Extract single-number citations like [1]
-    """
+    """Extract single-number citations like [1]"""
     matches = re.findall(r"\[(\d+)\]", answer_text)
     return sorted(set(int(m) for m in matches))
 
@@ -75,6 +80,42 @@ def calculate_confidence(citation_ids):
     if len(citation_ids) >= 2:
         return "FULL_SUPPORT"
     return "PARTIAL_SUPPORT"
+
+
+def build_conversation_block(history: List[ConversationMessage]) -> str:
+    """Format the last 6 messages (3 turns) as conversation context."""
+    if not history:
+        return ""
+    recent = history[-6:]
+    lines = []
+    for msg in recent:
+        label = "User" if msg.role == "user" else "Assistant"
+        lines.append(f"{label}: {msg.content}")
+    return "\n".join(lines)
+
+
+def parse_follow_up_questions(raw: str):
+    """
+    Splits the model output on the FOLLOW_UP_QUESTIONS marker.
+    Returns (answer, [q1, q2, q3]).
+    """
+    marker = "FOLLOW_UP_QUESTIONS:"
+    if marker not in raw:
+        return raw.strip(), []
+
+    parts = raw.split(marker, 1)
+    answer = parts[0].strip()
+    questions_block = parts[1].strip()
+
+    questions = []
+    for line in questions_block.splitlines():
+        line = line.strip()
+        # Strip leading "1. " / "- " / "* "
+        cleaned = re.sub(r"^[\d]+[.)]\s*|^[-*]\s*", "", line).strip()
+        if cleaned and cleaned.endswith("?"):
+            questions.append(cleaned)
+
+    return answer, questions[:3]
 
 
 # =========================
@@ -127,22 +168,18 @@ def ask_question(request: QueryRequest):
             content = segment.get("content")
 
             if content:
-                # Add numbered context block
                 context_blocks.append(f"""
 [{citation_index}]
 Source: {title}
 Content:
 {content}
 """)
-
-                # Clean snippet for UI preview
                 cleaned = content.strip().replace("\n", " ")
                 short_snippet = (
                     cleaned[:200] + "..."
                     if len(cleaned) > 200
                     else cleaned
                 )
-
                 numbered_sources.append({
                     "id": citation_index,
                     "anchor_id": f"source-{citation_index}",
@@ -150,7 +187,6 @@ Content:
                     "uri": link,
                     "snippet": short_snippet
                 })
-
                 citation_index += 1
 
     context_text = "\n\n".join(context_blocks)
@@ -163,8 +199,22 @@ Content:
             "confidence": "NO_SUPPORT",
             "grounded_documents": 0,
             "citations": [],
-            "sources": []
+            "sources": [],
+            "follow_up_questions": []
         }
+
+    # =========================
+    # Build Conversation Context
+    # =========================
+
+    conversation_block = build_conversation_block(request.conversation_history)
+    conversation_section = ""
+    if conversation_block:
+        conversation_section = f"""
+Conversation so far (for context only — do NOT cite from it):
+{conversation_block}
+
+"""
 
     # =========================
     # Prompt
@@ -173,28 +223,37 @@ Content:
     prompt = f"""
 You are a cloud infrastructure documentation assistant.
 
-Answer ONLY using the numbered sources below.
+{conversation_section}Answer ONLY using the numbered sources below.
 
 Rules:
-- Use ONLY citation numbers that exist.
-- Use SINGLE citation format like [1]
-- Do NOT group citations like [1,2]
+- Use ONLY citation numbers that exist in the sources provided.
+- Use SINGLE citation format like [1] — do NOT group like [1,2].
 - Use bullet points when listing multiple items.
 - Provide clear, structured answers.
-- If unsupported, say:
-"The information is not available in the approved documentation."
+- Take into account the conversation history above to give contextually relevant answers.
+- If unsupported by the sources, say: "The information is not available in the approved documentation."
 
 Sources:
 {context_text}
 
-Question:
+Current Question:
 {request.query}
+
+After your answer, suggest exactly 3 short follow-up questions the user is likely to ask next, based on this conversation and topic. Format them exactly as:
+
+FOLLOW_UP_QUESTIONS:
+1. First follow-up question?
+2. Second follow-up question?
+3. Third follow-up question?
 """
 
     gemini_response = model.generate_content(prompt)
-    answer = gemini_response.text.strip()
+    raw_output = gemini_response.text.strip()
 
-    # Normalize grouped citations
+    # Parse answer and follow-up questions
+    answer, follow_up_questions = parse_follow_up_questions(raw_output)
+
+    # Normalize grouped citations in answer
     answer = normalize_citations(answer)
 
     citation_ids = extract_citations(answer)
@@ -216,5 +275,6 @@ Question:
         "confidence": confidence,
         "grounded_documents": len(cited_sources),
         "citations": citation_ids,
-        "sources": cited_sources
+        "sources": cited_sources,
+        "follow_up_questions": follow_up_questions
     }
