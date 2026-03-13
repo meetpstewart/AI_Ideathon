@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+google-cloud-aiplatform
+google-cloud-storage
+python-docx
+pypdf
+tiktoken
+requests
