@@ -2,4 +2,3 @@ fastapi
 uvicorn
 google-cloud-discoveryengine
 google-cloud-aiplatform
-httpx

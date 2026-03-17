@@ -8,7 +8,8 @@ from vertexai.generative_models import GenerativeModel
 import vertexai
 import re
 import os
-import httpx
+import json
+import urllib.request
 
 
 # =========================
@@ -322,10 +323,9 @@ def _run_slack_query(query: str, response_url: str):
         f"{followup_lines}"
     )
 
-    httpx.post(response_url, json={
-        "response_type": "in_channel",
-        "text": text,
-    })
+    payload = json.dumps({"response_type": "in_channel", "text": text}).encode()
+    req = urllib.request.Request(response_url, data=payload, headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(req)
 
 
 @app.post("/slack/ask")
