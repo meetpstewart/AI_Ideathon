@@ -1,12 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 from google.cloud import discoveryengine_v1
 from vertexai.generative_models import GenerativeModel
 import vertexai
 import re
+import os
+import requests
 
 
 # =========================
@@ -32,6 +34,8 @@ PROJECT_NUMBER = "655994006172"
 PROJECT_ID = "ai-ideathon-2026"
 LOCATION = "us"
 DATA_STORE_ID = "ai-documents-connector_1772155619185_gcs_store"
+
+SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
 
 SERVING_CONFIG = (
     f"projects/{PROJECT_NUMBER}/locations/{LOCATION}/collections/default_collection/"
@@ -278,3 +282,71 @@ FOLLOW_UP_QUESTIONS:
         "sources": cited_sources,
         "follow_up_questions": follow_up_questions
     }
+
+
+# =========================
+# Slack Integration
+# =========================
+
+def _run_slack_query(query: str, response_url: str):
+    """Background task: run RAG pipeline and post result back to Slack."""
+    result = ask_question(QueryRequest(query=query))
+
+    confidence_emoji = {
+        "FULL_SUPPORT": ":large_green_circle:",
+        "PARTIAL_SUPPORT": ":large_yellow_circle:",
+        "NO_SUPPORT": ":red_circle:",
+    }.get(result["confidence"], ":white_circle:")
+
+    # Clean citations like [1] from answer text for Slack readability
+    clean_answer = re.sub(r"\[\d+\]", "", result["answer"]).strip()
+
+    # Build source lines
+    source_lines = ""
+    if result["sources"]:
+        source_lines = "\n\n*Sources:*\n" + "\n".join(
+            f"• [{src['id']}] {src['title']}" for src in result["sources"]
+        )
+
+    # Build follow-up suggestions
+    followup_lines = ""
+    if result["follow_up_questions"]:
+        followup_lines = "\n\n*You might also ask:*\n" + "\n".join(
+            f"› {q}" for q in result["follow_up_questions"]
+        )
+
+    text = (
+        f"{confidence_emoji} *{result['confidence'].replace('_', ' ')}*\n\n"
+        f"{clean_answer}"
+        f"{source_lines}"
+        f"{followup_lines}"
+    )
+
+    requests.post(response_url, json={
+        "response_type": "in_channel",
+        "text": text,
+    })
+
+
+@app.post("/slack/ask")
+async def slack_ask(
+    background_tasks: BackgroundTasks,
+    text: Optional[str] = Form(default=""),
+    response_url: Optional[str] = Form(default=None),
+    user_name: Optional[str] = Form(default="User"),
+):
+    query = (text or "").strip()
+    if not query:
+        return {"response_type": "ephemeral", "text": "Please provide a question. Usage: `/ask <your question>`"}
+
+    if response_url:
+        background_tasks.add_task(_run_slack_query, query, response_url)
+        return {
+            "response_type": "in_channel",
+            "text": f":hourglass_flowing_sand: *{user_name} asked:* {query}\n_Searching the knowledge base..._"
+        }
+
+    # Fallback: synchronous (no response_url)
+    result = ask_question(QueryRequest(query=query))
+    clean_answer = re.sub(r"\[\d+\]", "", result["answer"]).strip()
+    return {"response_type": "in_channel", "text": clean_answer}
