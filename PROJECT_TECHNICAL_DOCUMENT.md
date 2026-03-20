@@ -4,9 +4,11 @@
 **Project:** AI Ideathon 2026
 **Organization:** Stewart Title Guaranty Company
 **Cloud Platform:** Google Cloud Platform (GCP)
-**Document Version:** 1.0
-**Last Updated:** 2026-03-19
+**Document Version:** 1.1
+**Last Updated:** 2026-03-20
 **Repository:** https://github.com/meetpstewart/AI_Ideathon
+**Live Web App:** https://aiideathon.vercel.app
+**Backend API:** https://ai-knowledge-backend-655994006172.us-central1.run.app
 
 ---
 
@@ -53,6 +55,19 @@ The system allows employees and stakeholders to ask natural language questions a
 - Multi-channel access: Web UI + Slack bot
 - Real-time session analytics and feedback collection
 - Enterprise-grade Stewart branding and UI/UX
+
+---
+
+## Live Deployment Summary
+
+| Component | URL / Location |
+|---|---|
+| **Web Application** | https://aiideathon.vercel.app |
+| **Backend API** | https://ai-knowledge-backend-655994006172.us-central1.run.app |
+| **Slack Bot** | `/ask` command in AI_Documentation_Assistant workspace |
+| **Source Code** | https://github.com/meetpstewart/AI_Ideathon |
+| **Frontend Hosting** | Vercel (auto-deploys on push to `main`) |
+| **Backend Hosting** | Google Cloud Run (`us-central1`) |
 
 ---
 
@@ -313,6 +328,7 @@ Return JSON:
 |---|---|
 | Docker | Containerization |
 | Git + GitHub | Version control |
+| Vercel | Frontend hosting and CDN (https://aiideathon.vercel.app) |
 | ESLint | Frontend code linting |
 | tiktoken | Token-aware text chunking |
 | python-docx | Word document parsing |
@@ -1113,11 +1129,19 @@ npm run build
 
 ### 15.6 Frontend Deployment Options
 
-**Option A: GitHub Pages / Netlify / Vercel (Recommended for demo)**
-```bash
-# Netlify drop: drag and drop dist/ folder to netlify.com/drop
-# Vercel: vercel deploy --prod from ai-frontend/
-```
+**Option A: Vercel (Current Production — Recommended)**
+
+The frontend is deployed on Vercel at **https://aiideathon.vercel.app**
+
+Setup steps:
+1. Go to vercel.com → sign in with GitHub
+2. Click **Add New Project** → Import `AI_Ideathon` repo
+3. Set **Root Directory** to `ai-frontend`
+4. Framework preset: **Vite** (auto-detected)
+5. Build command: `npm run build` | Output directory: `dist`
+6. Click **Deploy**
+
+Vercel automatically redeploys on every push to `main`. No environment variables needed — the backend URL is hardcoded to the Cloud Run service.
 
 **Option B: Cloud Run (same infra)**
 ```bash
@@ -1128,8 +1152,9 @@ gcloud run deploy ai-knowledge-frontend \
   --allow-unauthenticated
 ```
 
-**Option C: GitHub Codespaces (current dev setup)**
+**Option C: GitHub Codespaces (development only)**
 - Runs via `npm run dev` with port forwarding
+- Right-click port 5173 → Port Visibility → Public for external access
 - Access at the Codespace preview URL
 
 ### 15.7 Slack Bot Setup
