@@ -247,6 +247,63 @@ Developer pushes code to GitHub (main branch)
 
 ---
 
+## 5. Competitive Differentiation — Why Not Just Use Microsoft 365 Copilot?
+
+A common question when evaluating this project: *"Doesn't Microsoft 365 Copilot already do this?"*
+
+The short answer is: **Copilot solves a similar problem space, but in a fundamentally different — and less governed — way.**
+
+### Feature Comparison
+
+| Feature | M365 Copilot | Our System |
+|---|---|---|
+| **Cost** | ~$30/user/month ($360/user/year) | GCP pay-per-use (cents per query) |
+| **Document scope** | Searches ALL files the user has access to | Only answers from explicitly approved documents |
+| **Citation level** | General "based on your files" | Numbered `[1]` citations linked per sentence |
+| **Confidence scoring** | None | FULL / PARTIAL / NO SUPPORT per answer |
+| **Governance control** | Microsoft controls the stack | 100% isolated within Stewart's GCP project |
+| **Approval workflow** | No — no document gating | Only indexed, approved documents can be cited |
+| **Custom branding** | Microsoft UI only | Full Stewart brand identity |
+| **Session analytics** | None | Built-in confidence breakdown + satisfaction rate |
+| **Follow-up suggestions** | Basic | Context-aware, topic-specific chips |
+| **Vendor dependency** | Deep Microsoft lock-in | Portable — any GCP service can be swapped |
+| **Requires M365 license** | Yes — E3/E5 + Copilot add-on | No — open web + Slack |
+| **Data residency** | Microsoft processes your data | Data never leaves your GCP project |
+
+### The Core Governance Difference
+
+Microsoft 365 Copilot searches **everything** a user has permission to access — SharePoint, OneDrive, emails, Teams chats. There is no document approval layer. A user asking about cloud infrastructure might get an answer pulled from an outdated email thread, an unapproved draft, or an irrelevant HR document.
+
+Our system inverts this:
+
+> **Only documents that have been explicitly approved, ingested, and indexed can ever appear in an answer.**
+
+This is a fundamentally different trust model — one that aligns with enterprise compliance, legal defensibility, and audit requirements.
+
+### The Citation Difference
+
+Copilot tells you an answer came *"from your SharePoint files."*
+
+Our system tells you:
+
+> *"The Quarter Rack has 1440 GB RAM* **[1]** — sourced from **Cloud Infrastructure Guide**, page 4."*
+
+Every factual claim is numbered, every number links to a specific document card with title, URI, and the exact passage used. That is citation-level accountability that Copilot does not offer.
+
+### The Cost Difference
+
+| Scenario | M365 Copilot | Our System |
+|---|---|---|
+| 100 users, 1 year | ~$36,000 | ~$50–200 (GCP usage) |
+| Requires existing M365 E3/E5 | Yes (~$36/user/month extra) | No |
+| Per-query cost | Flat subscription | Pay only for what you use |
+
+### The Pitch
+
+> *"Microsoft Copilot searches all your files. We only answer from approved ones — and we tell you exactly which sentence came from which document, and how confident we are. That's the difference between a general AI assistant and a governed enterprise knowledge system."*
+
+---
+
 ## Summary
 
 This project demonstrates a **production-deployed, enterprise-grade AI system** built entirely on Google Cloud Platform in the timeframe of the AI Ideathon. It directly addresses a real business problem at Stewart — knowledge accessibility and AI governance — using industry-standard patterns (RAG, grounding, citation tracking) deployed on GCP-native infrastructure.
