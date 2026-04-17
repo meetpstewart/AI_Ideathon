@@ -62,7 +62,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "https://ai-backend-655994006172.us-central1.run.app/ask",
+        "https://ai-knowledge-backend-880000498775.us-central1.run.app/ask",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
