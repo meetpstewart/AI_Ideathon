@@ -201,7 +201,10 @@ function App() {
       components={{
         code({ node, inline, className, children, ...props }) {
           const language = /language-(\w+)/.exec(className || "")?.[1] || "";
-          if (!inline) {
+          const code = String(children).replace(/\n$/, "");
+          const isMultiLine = code.includes("\n");
+          const isSubstantial = code.length > 40;
+          if (!inline && (isMultiLine || isSubstantial)) {
             return <CodeBlock language={language}>{children}</CodeBlock>;
           }
           return (
