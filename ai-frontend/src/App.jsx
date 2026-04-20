@@ -133,32 +133,86 @@ function App() {
   })();
 
   // =========================
+  // Code Block with Copy Button
+  // =========================
+  const CodeBlock = ({ language, children }) => {
+    const [copied, setCopied] = useState(false);
+    const code = String(children).replace(/\n$/, "");
+    const handleCopy = () => {
+      navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+    return (
+      <div style={{ margin: "12px 0", borderRadius: "8px", overflow: "hidden", border: "1px solid #2d2d3d" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+          backgroundColor: "#2d2d3d", padding: "6px 14px" }}>
+          <span style={{ fontSize: "11px", color: "#999", fontFamily: "monospace" }}>
+            {language || "code"}
+          </span>
+          <button onClick={handleCopy} style={{
+            background: copied ? "#166534" : "transparent",
+            border: `1px solid ${copied ? "#16a34a" : "#555"}`,
+            color: copied ? "#4ade80" : "#bbb",
+            padding: "3px 10px", borderRadius: "4px", fontSize: "11px",
+            cursor: "pointer", display: "flex", alignItems: "center", gap: "5px",
+            transition: "all 0.2s",
+          }}>
+            {copied ? "✓ Copied!" : "⎘ Copy"}
+          </button>
+        </div>
+        <pre style={{ backgroundColor: "#1e1e2e", margin: 0, padding: "16px 18px",
+          overflowX: "auto", fontFamily: "'Consolas', 'Courier New', monospace",
+          fontSize: "13px", lineHeight: 1.65, color: "#e2e8f0" }}>
+          <code style={{ fontFamily: "inherit" }}>{code}</code>
+        </pre>
+      </div>
+    );
+  };
+
+  // =========================
   // Citation Renderer
   // =========================
+  const CitationText = ({ children }) => {
+    if (typeof children !== "string") return children;
+    const parts = children.split(/(\[\d+\])/g);
+    return (
+      <>
+        {parts.map((part, index) => {
+          const match = part.match(/\[(\d+)\]/);
+          if (match) {
+            const id = match[1];
+            return (
+              <sup key={index} onClick={() =>
+                document.getElementById(`source-${id}`)?.scrollIntoView({ behavior: "smooth" })
+              } style={{ cursor: "pointer", color: TEAL, fontSize: "0.75em", marginLeft: "2px", fontWeight: 700 }}>
+                [{id}]
+              </sup>
+            );
+          }
+          return part;
+        })}
+      </>
+    );
+  };
+
   const MarkdownWithCitations = ({ text }) => (
     <ReactMarkdown
       components={{
-        text({ children }) {
-          if (typeof children !== "string") return children;
-          const parts = children.split(/(\[\d+\])/g);
+        code({ node, inline, className, children, ...props }) {
+          const language = /language-(\w+)/.exec(className || "")?.[1] || "";
+          if (!inline) {
+            return <CodeBlock language={language}>{children}</CodeBlock>;
+          }
           return (
-            <>
-              {parts.map((part, index) => {
-                const match = part.match(/\[(\d+)\]/);
-                if (match) {
-                  const id = match[1];
-                  return (
-                    <sup key={index} onClick={() =>
-                      document.getElementById(`source-${id}`)?.scrollIntoView({ behavior: "smooth" })
-                    } style={{ cursor: "pointer", color: TEAL, fontSize: "0.75em", marginLeft: "2px", fontWeight: 700 }}>
-                      [{id}]
-                    </sup>
-                  );
-                }
-                return part;
-              })}
-            </>
+            <code style={{ backgroundColor: "#f0f4f8", padding: "2px 6px", borderRadius: "4px",
+              fontFamily: "'Consolas', monospace", fontSize: "0.88em", color: "#1a365d" }} {...props}>
+              {children}
+            </code>
           );
+        },
+        text({ children }) {
+          return <CitationText>{children}</CitationText>;
         },
       }}
     >
