@@ -19,13 +19,17 @@
 
 ---
 
-**"Let me start with a scenario that happens at Stewart every week."**
+**"Let me start with two real conversations that happened on our team."**
 
-"A new team member needs to know the RAM capacity of an Exadata Quarter Rack before a client call. They search the shared drive — nothing obvious. They email a subject matter expert — who might respond in two days. They try Google — they get Oracle's public docs, not Stewart's internal configuration. So they either delay the call, or worse, they guess."
+"First one — a colleague messages me: *'Hi Meet, do we have any documented standards for app registration naming convention?'* I say I'll check and get back to them. Thirty minutes later: *'I have a call with the team in 10 minutes, can you let me know if you find something?'* I'm now scrambling through shared drives trying to find the right document before their call starts.
 
-"Now multiply that across hundreds of employees, dozens of document libraries, and thousands of questions a year. That's not just a productivity problem — it's a governance risk."
+Second one — a different colleague: *'Do we have any document that lays out the SLA for application depending on its tier for DR failover?'* I say give me 5 minutes. They reply: *'The EPP team is asking for that doc to set up DR.'* A whole team is blocked, waiting on me to find a document.
 
-**"Today I'm going to show you how we solved it — in a way that's faster, safer, and fully traceable — using AI."**
+These aren't hypothetical scenarios. These are real messages I received. And this happens every week — to me, and to every technical writer and SME at Stewart.
+
+The cost isn't just my time. It's the engineer who can't start their work. The team blocked on a call. The risk that someone gives a wrong answer because they couldn't find the right document in time."
+
+**"Today I'm going to show you how we solved this — in a way that's faster, safer, and fully traceable — using AI."**
 
 ---
 
@@ -37,7 +41,7 @@
 
 "There are two specific problems we set out to solve:
 
-**Problem one: Employees can't find answers fast.** Stewart's knowledge is locked in hundreds of PDFs and Word documents. Most employees don't know what exists, where it is, or which version is current. They rely on SMEs who are already stretched thin.
+**Problem one: Employees can't find answers fast.** Stewart's knowledge is locked in hundreds of PDFs and Word documents. A developer needs to know the app registration naming convention before a call — but they don't know which document has it, or even if one exists. A whole team is blocked on DR failover setup waiting for someone to locate the right SLA document. Employees route these questions to SMEs and technical writers — who then have to drop everything to search for answers themselves.
 
 **Problem two: General AI tools are dangerous for enterprise use.** If I ask ChatGPT a question about Stewart's infrastructure, it will give me a confident answer — from the internet. Not from our documents. That answer could be completely wrong, and there's no way to know. No citation. No audit trail. No traceability. That's what we call hallucination — and in a regulated, compliance-driven environment like title insurance and real estate, hallucination is not acceptable.
 
