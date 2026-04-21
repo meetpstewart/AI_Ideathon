@@ -201,17 +201,25 @@ Everything runs inside GCP. No data leaves our environment. No external AI servi
 
 ---
 
-"A fair question judges might ask: *'Doesn't Microsoft 365 Copilot already do this?'*
+"A judge might ask — and I'd expect this question: *'Microsoft 365 Copilot now lets you create an AI agent from SharePoint in minutes. Doesn't that already do what you built?'*
 
-The short answer is: Copilot searches *everything* you have access to — SharePoint, emails, Teams chats, OneDrive. There is no document approval layer. An employee asking about cloud infrastructure might get an answer pulled from an outdated email thread or an unapproved draft.
+And the honest answer is: yes, it does some of it. I actually tested it myself this week. The M365 Copilot agent answers from SharePoint documents, it shows document citations, and it even says 'I couldn't find that in enterprise documentation' when something isn't covered.
 
-Our system inverts this model completely. **Only documents that have been explicitly approved, ingested, and indexed can ever appear in an answer.** That is a fundamentally different trust model.
+But look at the bottom of every single M365 Copilot response — it says: *'AI-generated content may be incorrect.'* That disclaimer is printed on every answer, including the good ones. Microsoft themselves cannot tell you how much to trust the answer.
 
-On citations: Copilot tells you an answer came 'from your SharePoint files.' We tell you exactly which sentence came from which document, numbered, linked, auditable.
+That is precisely the problem we set out to solve.
 
-On cost: Copilot is approximately $30 per user per month — $36,000 per year for 100 users. Our system runs on GCP pay-per-use — at current usage, that is estimated at $50 to $200 per year total.
+Our system doesn't just answer — it tells you *how confident* it is. FULL SUPPORT means two or more distinct document passages support the answer. PARTIAL SUPPORT means one. NO SUPPORT means the documents don't cover it. The user always knows exactly how much weight to put on the answer.
 
-We're not just cheaper. We're more governed, more traceable, and more controllable."
+Beyond that:
+
+**On citations:** M365 shows document-level chips — it links to a file. We show sentence-level numbered citations — every factual claim tagged [1] pointing to the exact passage used. That's the difference between 'this came from a document' and 'this specific sentence came from this specific passage on this specific document.'
+
+**On analytics:** M365 has none. We have a real-time dashboard showing confidence breakdown, satisfaction rates, and which documents are being cited most — turning every session into a feedback loop for improving documentation.
+
+**On access:** M365 Copilot requires a Copilot license at approximately $30 per user per month. Our system runs on any browser or Slack — no license required. 100 users for a year: $36,000 for M365, versus roughly $200 in GCP usage for ours.
+
+**The most important point:** The fact that Microsoft just shipped this validates that we identified the right problem at the right time. We just solved it with more governance, more transparency, and less cost."
 
 ---
 
