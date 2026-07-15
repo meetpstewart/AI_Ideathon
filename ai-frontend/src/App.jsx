@@ -7,10 +7,6 @@ import {
   FaCog,
   FaSearch,
   FaPaperPlane,
-  FaLinkedin,
-  FaFacebook,
-  FaInstagram,
-  FaYoutube,
   FaThumbsUp,
   FaThumbsDown,
   FaLightbulb,
@@ -773,24 +769,8 @@ function App() {
 
       {/* ===== FOOTER ===== */}
       <footer style={{ backgroundColor: FOOTER_BG, color: "rgba(255,255,255,0.7)", padding: "28px 40px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-          flexWrap: "wrap", gap: "20px" }}>
-          <img src={stewartLogo} alt="Stewart" style={{ height: "28px", filter: "brightness(0) invert(1)", opacity: 0.85 }} />
-          <div style={{ display: "flex", gap: "24px", fontSize: "12px" }}>
-            {["Privacy", "Terms of Use", "Submit a Claim", "Contact Us"].map((item) => (
-              <span key={item} style={{ cursor: "pointer", color: "rgba(255,255,255,0.5)" }}>{item}</span>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: "16px", fontSize: "16px", color: "rgba(255,255,255,0.5)" }}>
-            <FaFacebook style={{ cursor: "pointer" }} />
-            <FaInstagram style={{ cursor: "pointer" }} />
-            <FaLinkedin style={{ cursor: "pointer" }} />
-            <FaYoutube style={{ cursor: "pointer" }} />
-          </div>
-        </div>
-        <div style={{ marginTop: "18px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.08)",
-          fontSize: "11px", color: "rgba(255,255,255,0.35)", textAlign: "center" }}>
-          &copy; 2026 Stewart Title Guaranty Company. All Rights Reserved. &mdash; AI Knowledge Assistant &bull; Enterprise Edition
+        <div style={{ textAlign: "center", fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>
+          &copy; 2026 AI Knowledge Assistant &mdash; Personal Ideathon Project
         </div>
       </footer>
 
