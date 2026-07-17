@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from google.cloud import discoveryengine_v1
 from vertexai.generative_models import GenerativeModel
+from langfuse import Langfuse
 import vertexai
 import re
 import os
@@ -45,6 +46,9 @@ SERVING_CONFIG = (
 
 vertexai.init(project=PROJECT_ID, location="us-central1")
 model = GenerativeModel("publishers/google/models/gemini-2.5-flash")
+
+# Langfuse tracing (reads LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST from env)
+langfuse = Langfuse()
 
 
 # =========================
@@ -139,6 +143,14 @@ def health():
 @app.post("/ask")
 def ask_question(request: QueryRequest):
 
+    trace = langfuse.trace(
+        name="ask_question",
+        input={
+            "query": request.query,
+            "conversation_history": [m.dict() for m in request.conversation_history],
+        },
+    )
+
     search_client = discoveryengine_v1.SearchServiceClient(
         client_options={"api_endpoint": "us-discoveryengine.googleapis.com"}
     )
@@ -155,6 +167,7 @@ def ask_question(request: QueryRequest):
         )
     )
 
+    retrieval_span = trace.span(name="vertex-ai-search-retrieval", input={"query": request.query})
     response = search_client.search(search_request)
 
     context_blocks = []
@@ -196,9 +209,11 @@ Content:
 
     context_text = "\n\n".join(context_blocks)
 
+    retrieval_span.end(output={"num_sources": len(numbered_sources), "sources": numbered_sources})
+
     # If nothing retrieved
     if not context_text.strip():
-        return {
+        response_payload = {
             "question": request.query,
             "answer": "The information is not available in the approved documentation.",
             "confidence": "NO_SUPPORT",
@@ -207,6 +222,9 @@ Content:
             "sources": [],
             "follow_up_questions": []
         }
+        trace.update(output=response_payload)
+        langfuse.flush()
+        return response_payload
 
     # =========================
     # Build Conversation Context
@@ -236,6 +254,8 @@ Rules:
 - Use bullet points when listing multiple items.
 - Provide clear, structured answers.
 - Take into account the conversation history above to give contextually relevant answers.
+- When the sources contain code snippets, commands, configuration examples, or scripts, ALWAYS include them in your answer using markdown fenced code blocks (```language ... ```). Preserve the original code exactly as it appears in the sources.
+- If the user asks for code, examples, or commands, prioritize showing the relevant code from the sources.
 - If unsupported by the sources, say: "The information is not available in the approved documentation."
 
 Sources:
@@ -252,8 +272,14 @@ FOLLOW_UP_QUESTIONS:
 3. Third follow-up question?
 """
 
+    generation = trace.generation(
+        name="gemini-generation",
+        model="gemini-2.5-flash",
+        input=prompt,
+    )
     gemini_response = model.generate_content(prompt)
     raw_output = gemini_response.text.strip()
+    generation.end(output=raw_output)
 
     # Parse answer and follow-up questions
     answer, follow_up_questions = parse_follow_up_questions(raw_output)
@@ -274,7 +300,7 @@ FOLLOW_UP_QUESTIONS:
 
     confidence = calculate_confidence(citation_ids)
 
-    return {
+    response_payload = {
         "question": request.query,
         "answer": answer,
         "confidence": confidence,
@@ -283,6 +309,9 @@ FOLLOW_UP_QUESTIONS:
         "sources": cited_sources,
         "follow_up_questions": follow_up_questions
     }
+    trace.update(output=response_payload)
+    langfuse.flush()
+    return response_payload
 
 
 # =========================
