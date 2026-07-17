@@ -47,8 +47,13 @@ SERVING_CONFIG = (
 vertexai.init(project=PROJECT_ID, location="us-central1")
 model = GenerativeModel("publishers/google/models/gemini-2.5-flash")
 
-# Langfuse tracing (reads LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST from env)
-langfuse = Langfuse()
+# Langfuse tracing — explicit config (avoids relying on which env var name the SDK version expects)
+langfuse = Langfuse(
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
+    host=os.environ.get("LANGFUSE_BASE_URL") or os.environ.get("LANGFUSE_HOST") or "https://cloud.langfuse.com",
+    debug=True,
+)
 
 
 # =========================
