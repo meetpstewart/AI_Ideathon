@@ -93,12 +93,26 @@ def main():
         if metric in scores_df.columns:
             print(f"{metric:20s}: {scores_df[metric].mean():.3f}")
 
+    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+    secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+
+    print(f"\nFull per-question results saved to {RESULTS_CSV_PATH}")
+
+    if not public_key or not secret_key:
+        print(
+            "\nSkipping Langfuse score push: LANGFUSE_PUBLIC_KEY/LANGFUSE_SECRET_KEY "
+            "not set in this shell's environment. Export them and re-run to attach "
+            "scores to each question's trace."
+        )
+        return
+
     langfuse = Langfuse(
-        public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
-        secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
+        public_key=public_key,
+        secret_key=secret_key,
         host=os.environ.get("LANGFUSE_BASE_URL") or os.environ.get("LANGFUSE_HOST") or "https://cloud.langfuse.com",
     )
 
+    pushed = 0
     for _, row in scores_df.iterrows():
         trace_id = row.get("trace_id")
         if not trace_id:
@@ -106,10 +120,10 @@ def main():
         for metric in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
             if metric in row and row[metric] == row[metric]:  # skip NaN
                 langfuse.score(trace_id=trace_id, name=f"ragas_{metric}", value=float(row[metric]))
+                pushed += 1
     langfuse.flush()
 
-    print(f"\nFull per-question results saved to {RESULTS_CSV_PATH}")
-    print("Scores also pushed to Langfuse, attached to each question's trace.")
+    print(f"Pushed {pushed} scores to Langfuse, attached to each question's trace.")
 
 
 if __name__ == "__main__":
