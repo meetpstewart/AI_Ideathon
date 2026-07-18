@@ -6,4 +6,5 @@ langchain-core<0.3
 langchain-community<0.3
 langchain-openai<0.2
 openai<2
+google-cloud-aiplatform<1.60
 langfuse<3
