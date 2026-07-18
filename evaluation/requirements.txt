@@ -1,0 +1,6 @@
+requests
+ragas>=0.1.9,<0.2
+datasets
+langchain-google-vertexai
+langchain-core
+langfuse<3

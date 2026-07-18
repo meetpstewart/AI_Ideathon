@@ -208,7 +208,8 @@ Content:
                     "anchor_id": f"source-{citation_index}",
                     "title": title,
                     "uri": link,
-                    "snippet": short_snippet
+                    "snippet": short_snippet,
+                    "full_content": content
                 })
                 citation_index += 1
 
@@ -225,7 +226,8 @@ Content:
             "grounded_documents": 0,
             "citations": [],
             "sources": [],
-            "follow_up_questions": []
+            "follow_up_questions": [],
+            "trace_id": trace.id
         }
         trace.update(output=response_payload)
         langfuse.flush()
@@ -312,7 +314,8 @@ FOLLOW_UP_QUESTIONS:
         "grounded_documents": len(cited_sources),
         "citations": citation_ids,
         "sources": cited_sources,
-        "follow_up_questions": follow_up_questions
+        "follow_up_questions": follow_up_questions,
+        "trace_id": trace.id
     }
     trace.update(output=response_payload)
     langfuse.flush()

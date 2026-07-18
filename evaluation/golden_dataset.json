@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What are the RMI ports for distributed installation?",
+    "ground_truth": "For a distributed (Master-Subserver) installation, you must open the RMI registry port and the RMI object port of the subserver. These ports must be configured in the firewall of the master (outbound connection) and the subservers (inbound connection). Additionally, the RMI registry must be bound to the internal host name of the cloud instance."
+  },
+  {
+    "question": "How can I change the default HTTP and HTTPS ports for PPM?",
+    "ground_truth": "Use the ARIS Cloud Controller commands: 'reconfigure loadbalancer_x +HTTPD.port=<new HTTP-Port>' to change the HTTP port, and 'reconfigure loadbalancer_x +HTTPD.ssl.port=<new HTTPS-Port>' to change the HTTPS port."
+  },
+  {
+    "question": "Where can I find the internal host name of a cloud instance?",
+    "ground_truth": "The internal host name can be retrieved using the URL http://instance-data/latest/meta-data/local-hostname in a local browser."
+  },
+  {
+    "question": "What is the default port for HTTP connections during PPM installation?",
+    "ground_truth": "The default port for HTTP connections is 4080."
+  },
+  {
+    "question": "What property should be reconfigured to fix long internal hostname issues on Microsoft Azure cloud instances?",
+    "ground_truth": "The zookeeper.application.instance.host property should be reconfigured on the affected runnables: umcadmin, ppm_core, ppm_web, <ppm_client>_as, and <ppm_client>_cs. You can set it to the instance name without suffix, the internal IP address, or 'localhost'."
+  },
+  {
+    "question": "What is the total RAM capacity of an Exadata Quarter Rack DB System?",
+    "ground_truth": "An Exadata Quarter Rack has a total RAM capacity of 1440 GB."
+  },
+  {
+    "question": "How many Exadata Storage Servers are in a Half Rack configuration?",
+    "ground_truth": "A Half Rack Exadata configuration has 6 Exadata Storage Servers."
+  },
+  {
+    "question": "What CIDR ranges are recommended for a Virtual Cloud Network (VCN) in Oracle Cloud Infrastructure?",
+    "ground_truth": "It's recommended to use one of the private IP address ranges in RFC 1918: 10.0.0.0/8, 172.16/12, or 192.168/16. The allowable VCN size range is /16 to /30, and the VCN reserves the first two IP addresses and the last one in each subnet's CIDR."
+  },
+  {
+    "question": "What is Off-box Network Virtualization in Oracle Cloud Infrastructure?",
+    "ground_truth": "Off-box Network Virtualization takes network and IO virtualization out of the software stack and puts it directly in the network hardware, removing the hypervisor layer. This increases network performance and gives a higher level of security through isolation, so that even if the hypervisor layer is breached, the attack remains localized to that single virtual network."
+  },
+  {
+    "question": "How do you enable HTTPS protocol for PPM after installation?",
+    "ground_truth": "Create your own certificate signed by an official certification authority, enhance the load balancer with that certificate using 'enhance loadbalancer_x with sslCertificate local file \"<path to ZIP file>\"', then enable HTTPS as the default protocol with: 'reconfigure loadbalancer_x +HTTPD.ssl.port=4443', 'reconfigure loadbalancer_x +zookeeper.application.instance.port=4443', and 'reconfigure loadbalancer_x +zookeeper.application.instance.scheme=https'."
+  }
+]
