@@ -4,4 +4,5 @@ datasets
 langchain-google-vertexai<2
 langchain-core<0.3
 langchain-community<0.3
+langchain-openai<0.2
 langfuse<3
