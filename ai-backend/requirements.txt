@@ -4,3 +4,4 @@ python-multipart
 google-cloud-discoveryengine
 google-cloud-aiplatform
 langfuse<3
+requests

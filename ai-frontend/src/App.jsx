@@ -13,6 +13,7 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaTimesCircle,
+  FaChartLine,
 } from "react-icons/fa";
 import stewartLogo from "./assets/stewart-logo.svg";
 
@@ -29,6 +30,8 @@ const GRAY_BORDER = "#e0e0e0";
 const TEXT_DARK   = "#231F20";
 const TEXT_MID    = "#555555";
 const FOOTER_BG   = "#111111";
+
+const BACKEND_BASE_URL = "https://ai-knowledge-backend-880000498775.us-central1.run.app";
 
 function App() {
   const [question, setQuestion]                       = useState("");
@@ -58,7 +61,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "https://ai-knowledge-backend-880000498775.us-central1.run.app/ask",
+        `${BACKEND_BASE_URL}/ask`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -296,10 +299,11 @@ function App() {
   );
 
   const navItems = [
-    { icon: <FaComments />, label: "Chat"      },
-    { icon: <FaFileAlt />,  label: "Docs"      },
-    { icon: <FaChartBar />, label: "Analytics" },
-    { icon: <FaCog />,      label: "Settings"  },
+    { icon: <FaComments />,  label: "Chat"          },
+    { icon: <FaFileAlt />,   label: "Docs"          },
+    { icon: <FaChartBar />,  label: "Analytics"     },
+    { icon: <FaChartLine />, label: "Observability" },
+    { icon: <FaCog />,       label: "Settings"      },
   ];
 
   const turnCount = conversationHistory.filter((m) => m.role === "user").length;
@@ -461,6 +465,122 @@ function App() {
               </div>
             </div>
           </>
+        )}
+      </div>
+    );
+  };
+
+  // ============================================================
+  // OBSERVABILITY VIEW
+  // ============================================================
+  const ObservabilityView = () => {
+    const [traces, setTraces] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      let cancelled = false;
+      fetch(`${BACKEND_BASE_URL}/observability/recent?limit=20`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`Request failed (${res.status})`);
+          return res.json();
+        })
+        .then((data) => {
+          if (!cancelled) setTraces(data.traces || []);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => { cancelled = true; };
+    }, []);
+
+    const confidenceColor = {
+      FULL_SUPPORT: "#16a34a",
+      PARTIAL_SUPPORT: "#d97706",
+      NO_SUPPORT: RED,
+    };
+
+    return (
+      <div style={{ padding: "28px 36px", overflowY: "auto" }}>
+        <div style={{ marginBottom: "24px" }}>
+          <h2 style={{ fontSize: "20px", fontWeight: 700, color: TEXT_DARK, margin: 0 }}>Observability &amp; Evaluation</h2>
+          <p style={{ fontSize: "13px", color: "#888", marginTop: "4px" }}>
+            Live traces from every question asked, with RAGAS quality scores where available
+          </p>
+        </div>
+
+        {loading ? (
+          <p style={{ color: "#aaa", fontSize: "13px" }}>Loading recent traces...</p>
+        ) : error ? (
+          <p style={{ color: RED, fontSize: "13px" }}>Could not load traces: {error}</p>
+        ) : traces.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#bbb" }}>
+            <FaChartLine style={{ fontSize: "40px", marginBottom: "14px" }} />
+            <p style={{ fontSize: "15px", fontWeight: 500, color: "#888" }}>No traces yet</p>
+            <p style={{ fontSize: "13px", marginTop: "6px" }}>Ask a question in the Chat tab to see it traced here.</p>
+          </div>
+        ) : (
+          <div style={{ backgroundColor: WHITE, borderRadius: "10px", border: `1px solid ${GRAY_BORDER}`,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ backgroundColor: GRAY_BG, textAlign: "left" }}>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>Question</th>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>Confidence</th>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>Sources</th>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>RAGAS Scores</th>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>Latency</th>
+                  <th style={{ padding: "10px 16px", color: TEXT_MID, fontWeight: 600 }}>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {traces.map((t) => {
+                  const scoreEntries = Object.entries(t.ragas_scores || {});
+                  return (
+                    <tr key={t.trace_id} style={{ borderTop: `1px solid ${GRAY_BORDER}` }}>
+                      <td style={{ padding: "10px 16px", maxWidth: "320px", overflow: "hidden",
+                        textOverflow: "ellipsis", whiteSpace: "nowrap", color: TEXT_DARK }}>
+                        {t.question || "—"}
+                      </td>
+                      <td style={{ padding: "10px 16px" }}>
+                        {t.confidence ? (
+                          <span style={{ color: confidenceColor[t.confidence] || TEXT_MID, fontWeight: 600, fontSize: "12px" }}>
+                            {t.confidence.replace("_", " ")}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td style={{ padding: "10px 16px", color: TEXT_MID }}>
+                        {t.grounded_documents ?? "—"}
+                      </td>
+                      <td style={{ padding: "10px 16px" }}>
+                        {scoreEntries.length === 0 ? (
+                          <span style={{ color: "#bbb", fontSize: "12px" }}>not evaluated</span>
+                        ) : (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                            {scoreEntries.map(([name, value]) => (
+                              <span key={name} style={{ backgroundColor: TEAL_LIGHT, color: TEAL,
+                                fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px" }}>
+                                {name}: {typeof value === "number" ? value.toFixed(2) : value}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: "10px 16px", color: TEXT_MID }}>
+                        {t.latency ? `${typeof t.latency === "number" ? t.latency.toFixed(2) : t.latency}s` : "—"}
+                      </td>
+                      <td style={{ padding: "10px 16px", color: TEXT_MID, whiteSpace: "nowrap" }}>
+                        {t.timestamp ? new Date(t.timestamp).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     );
@@ -754,6 +874,8 @@ function App() {
 
           {/* ===== ANALYTICS TAB ===== */}
           {activeNav === "Analytics" && <AnalyticsView />}
+
+          {activeNav === "Observability" && <ObservabilityView />}
 
           {/* ===== PLACEHOLDER TABS ===== */}
           {(activeNav === "Docs" || activeNav === "Settings") && (

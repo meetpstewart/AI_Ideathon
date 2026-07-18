@@ -11,6 +11,7 @@ import re
 import os
 import json
 import urllib.request
+import requests
 
 
 # =========================
@@ -47,11 +48,15 @@ SERVING_CONFIG = (
 vertexai.init(project=PROJECT_ID, location="us-central1")
 model = GenerativeModel("publishers/google/models/gemini-2.5-flash")
 
+LANGFUSE_PUBLIC_KEY = os.environ.get("LANGFUSE_PUBLIC_KEY", "")
+LANGFUSE_SECRET_KEY = os.environ.get("LANGFUSE_SECRET_KEY", "")
+LANGFUSE_HOST = os.environ.get("LANGFUSE_BASE_URL") or os.environ.get("LANGFUSE_HOST") or "https://cloud.langfuse.com"
+
 # Langfuse tracing — explicit config (avoids relying on which env var name the SDK version expects)
 langfuse = Langfuse(
-    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
-    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
-    host=os.environ.get("LANGFUSE_BASE_URL") or os.environ.get("LANGFUSE_HOST") or "https://cloud.langfuse.com",
+    public_key=LANGFUSE_PUBLIC_KEY,
+    secret_key=LANGFUSE_SECRET_KEY,
+    host=LANGFUSE_HOST,
     debug=True,
 )
 
@@ -320,6 +325,56 @@ FOLLOW_UP_QUESTIONS:
     trace.update(output=response_payload)
     langfuse.flush()
     return response_payload
+
+
+# =========================
+# Observability (proxies Langfuse's public API so the frontend
+# never needs the Langfuse secret key)
+# =========================
+
+@app.get("/observability/recent")
+def get_recent_observability(limit: int = 20):
+    auth = (LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY)
+
+    traces_resp = requests.get(
+        f"{LANGFUSE_HOST}/api/public/traces",
+        params={"limit": limit, "name": "ask_question", "orderBy": "timestamp.desc"},
+        auth=auth,
+    )
+    traces_resp.raise_for_status()
+    traces = traces_resp.json().get("data", [])
+
+    scores_resp = requests.get(
+        f"{LANGFUSE_HOST}/api/public/scores",
+        params={"limit": 500},
+        auth=auth,
+    )
+    scores_resp.raise_for_status()
+    scores = scores_resp.json().get("data", [])
+
+    scores_by_trace = {}
+    for score in scores:
+        trace_id = score.get("traceId")
+        name = score.get("name", "")
+        if trace_id and name.startswith("ragas_"):
+            scores_by_trace.setdefault(trace_id, {})[name.replace("ragas_", "")] = score.get("value")
+
+    results = []
+    for trace in traces:
+        output = trace.get("output") or {}
+        trace_input = trace.get("input") or {}
+        results.append({
+            "trace_id": trace.get("id"),
+            "timestamp": trace.get("timestamp"),
+            "question": trace_input.get("query") if isinstance(trace_input, dict) else None,
+            "answer": output.get("answer") if isinstance(output, dict) else None,
+            "confidence": output.get("confidence") if isinstance(output, dict) else None,
+            "grounded_documents": output.get("grounded_documents") if isinstance(output, dict) else None,
+            "latency": trace.get("latency"),
+            "ragas_scores": scores_by_trace.get(trace.get("id"), {}),
+        })
+
+    return {"traces": results}
 
 
 # =========================
