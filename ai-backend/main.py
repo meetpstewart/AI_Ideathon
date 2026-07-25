@@ -346,7 +346,7 @@ def get_recent_observability(limit: int = 20):
 
     scores_resp = requests.get(
         f"{LANGFUSE_HOST}/api/public/scores",
-        params={"limit": 500},
+        params={"limit": 100},  # Langfuse's public API caps limit at 100
         auth=auth,
     )
     scores_resp.raise_for_status()
