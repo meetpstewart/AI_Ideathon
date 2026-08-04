@@ -33,10 +33,10 @@ app.add_middleware(
 # CONFIG
 # =========================
 
-PROJECT_NUMBER = "880000498775"
-PROJECT_ID = "stewart-ai-ideathon-2026"
+PROJECT_NUMBER = "647785858624"
+PROJECT_ID = "enterprise-rag-504415"
 LOCATION = "us"
-DATA_STORE_ID = "ai-documents-connector_1775344109922"
+DATA_STORE_ID = "ai-documents-connector_1785780455567"
 
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
 
