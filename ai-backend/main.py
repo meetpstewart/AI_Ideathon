@@ -171,7 +171,6 @@ def ask_question(request: QueryRequest):
         page_size=5,
         content_search_spec=discoveryengine_v1.SearchRequest.ContentSearchSpec(
             extractive_content_spec=discoveryengine_v1.SearchRequest.ContentSearchSpec.ExtractiveContentSpec(
-                max_extractive_answer_count=2,
                 max_extractive_segment_count=3,
             )
         )
