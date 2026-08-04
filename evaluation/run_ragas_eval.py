@@ -14,6 +14,7 @@ Requires env vars: LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_BASE_URL
 
 import json
 import os
+import time
 
 import requests
 from datasets import Dataset
@@ -35,10 +36,18 @@ GOLDEN_DATASET_PATH = os.path.join(os.path.dirname(__file__), "golden_dataset.js
 RESULTS_CSV_PATH = os.path.join(os.path.dirname(__file__), "eval_results.csv")
 
 
-def ask(question: str) -> dict:
-    response = requests.post(ASK_ENDPOINT, json={"query": question, "conversation_history": []})
-    response.raise_for_status()
-    return response.json()
+def ask(question: str, max_retries: int = 3) -> dict:
+    for attempt in range(max_retries):
+        response = requests.post(ASK_ENDPOINT, json={"query": question, "conversation_history": []})
+        if response.status_code == 500 and attempt < max_retries - 1:
+            # Backend wraps upstream Gemini 429s (quota) as a generic 500 -- retry with backoff
+            # rather than assume it's a real bug, since fresh GCP projects have low default quota.
+            wait = 15 * (attempt + 1)
+            print(f"Got 500 (likely Gemini rate limit), waiting {wait}s before retry...")
+            time.sleep(wait)
+            continue
+        response.raise_for_status()
+        return response.json()
 
 
 def build_eval_rows(golden_set: list[dict]) -> list[dict]:
@@ -53,6 +62,7 @@ def build_eval_rows(golden_set: list[dict]) -> list[dict]:
             "ground_truth": item["ground_truth"],
             "trace_id": result.get("trace_id"),
         })
+        time.sleep(3)  # space out requests to stay under this new project's default Gemini quota
         print(f"Answered: {item['question'][:60]}...")
     return rows
 
