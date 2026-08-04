@@ -29,8 +29,8 @@ from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_google_vertexai import ChatVertexAI, VertexAIEmbeddings
 from langfuse import Langfuse
 
-ASK_ENDPOINT = "https://ai-knowledge-backend-880000498775.us-central1.run.app/ask"
-PROJECT_ID = "stewart-ai-ideathon-2026"
+ASK_ENDPOINT = "https://ai-knowledge-backend-647785858624.us-central1.run.app/ask"
+PROJECT_ID = "enterprise-rag-504415"
 GOLDEN_DATASET_PATH = os.path.join(os.path.dirname(__file__), "golden_dataset.json")
 RESULTS_CSV_PATH = os.path.join(os.path.dirname(__file__), "eval_results.csv")
 

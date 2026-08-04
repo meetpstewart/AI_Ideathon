@@ -23,7 +23,7 @@ Register in Claude Desktop (claude_desktop_config.json):
 import requests
 from mcp.server.fastmcp import FastMCP
 
-ASK_ENDPOINT = "https://ai-knowledge-backend-880000498775.us-central1.run.app/ask"
+ASK_ENDPOINT = "https://ai-knowledge-backend-647785858624.us-central1.run.app/ask"
 
 mcp = FastMCP("cloud-docs-assistant")
 

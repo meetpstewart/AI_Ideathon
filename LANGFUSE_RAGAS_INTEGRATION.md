@@ -140,7 +140,7 @@ Each entry in `numbered_sources` (and therefore each API response's `sources` ar
 
 ### 3.4 Required environment variables
 
-Set on the Cloud Run service (`ai-knowledge-backend`, region `us-central1`, project `stewart-ai-ideathon-2026`):
+Set on the Cloud Run service (`ai-knowledge-backend`, region `us-central1`, project `enterprise-rag-504415`):
 
 | Variable | Purpose |
 |---|---|
@@ -191,7 +191,7 @@ Flow:
 
 ### 4.3 Running it
 
-Must be run somewhere with the Google Cloud credentials for `stewart-ai-ideathon-2026` already available — Cloud Shell is the simplest option (avoids needing local `gcloud auth` setup):
+Must be run somewhere with the Google Cloud credentials for `enterprise-rag-504415` already available — Cloud Shell is the simplest option (avoids needing local `gcloud auth` setup):
 
 ```bash
 cd ~/AI_Ideathon

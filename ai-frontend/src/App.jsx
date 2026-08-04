@@ -31,7 +31,7 @@ const TEXT_DARK   = "#231F20";
 const TEXT_MID    = "#555555";
 const FOOTER_BG   = "#111111";
 
-const BACKEND_BASE_URL = "https://ai-knowledge-backend-880000498775.us-central1.run.app";
+const BACKEND_BASE_URL = "https://ai-knowledge-backend-647785858624.us-central1.run.app";
 
 function App() {
   const [question, setQuestion]                       = useState("");
